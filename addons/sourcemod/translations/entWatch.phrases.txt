@@ -1,0 +1,47 @@
+"Phrases"
+{
+	"welcome"
+	{
+		"en" 	"Type !hud to toggle the HUD or !status to see if you are restricted or not."
+	}
+	"use"
+	{
+		"en" 	"used"
+	}
+	"pickup"
+	{
+		"en" 	"has picked up"
+	}
+	"drop"
+	{
+		"en" 	"has dropped"
+	}
+	"death"
+	{
+		"en" 	"has died with"
+	}
+	"disconnect"
+	{
+		"en" 	"disconnected with"
+	}
+	"cookies loading"
+	{
+		"en" 	"Please wait. Your settings are still loading."
+	}
+	"hud enabled"
+	{
+		"en" 	"The hud is now enabled"
+	}
+	"hud disabled"
+	{
+		"en" 	"The hud is now disabled"
+	}
+	"you are restricted"
+	{
+		"en" 	"You are currently restricted"
+	}
+	"you are not restricted"
+	{
+		"en" 	"You are currently not restricted"
+	}
+}
