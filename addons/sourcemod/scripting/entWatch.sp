@@ -84,7 +84,7 @@ public Plugin:myinfo =
 	author 			= "Prometheum & zaCade",
 	description 	= "Notify players about entity interactions.",
 	version 		= PLUGIN_VERSION,
-	url 			= "https://github.com/Prometheum/entWatch"
+	url 			= "https://github.com/zaCade/entWatch"
 };
 
 //----------------------------------------------------------------------------------------------------
