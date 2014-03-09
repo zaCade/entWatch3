@@ -92,10 +92,10 @@ public Plugin:myinfo =
 //----------------------------------------------------------------------------------------------------
 public OnPluginStart()
 {
+	CreateConVar("entwatch_version", PLUGIN_VERSION, "Current version of entWatch", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	
 	G_hCvar_EnableDisplay = CreateConVar("entwatch_enabledisplay", "1", "Allow players to display the hud.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
 	G_hCvar_ConfigName = CreateConVar("entwatch_configname", "color_classic", "The name of the color config.", FCVAR_PLUGIN);
-	
-	CreateConVar("entwatch_version", PLUGIN_VERSION, "Current version of entWatch", FCVAR_NOTIFY);
 	
 	G_hCookie_EnableDisplay = RegClientCookie("entwatch_enabledisplay", "", CookieAccess_Private);
 	G_hCookie_Restricted = RegClientCookie("entwatch_restricted", "", CookieAccess_Private);
