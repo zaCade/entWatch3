@@ -12,6 +12,8 @@
 #tryinclude <morecolors>
 #tryinclude <entWatch>
 
+#define PLUGIN_VERSION "3.0.0"
+
 //----------------------------------------------------------------------------------------------------
 // Purpose: Entity Data
 //----------------------------------------------------------------------------------------------------
@@ -81,7 +83,7 @@ public Plugin:myinfo =
 	name 			= "entWatch",
 	author 			= "Prometheum & zaCade",
 	description 	= "Notify players about entity interactions.",
-	version 		= "3.0",
+	version 		= PLUGIN_VERSION,
 	url 			= "https://github.com/Prometheum/entWatch"
 };
 
@@ -92,6 +94,8 @@ public OnPluginStart()
 {
 	G_hCvar_EnableDisplay = CreateConVar("entwatch_enabledisplay", "1", "Allow players to display the hud.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
 	G_hCvar_ConfigName = CreateConVar("entwatch_configname", "color_classic", "The name of the color config.", FCVAR_PLUGIN);
+	
+	CreateConVar("entwatch_version", PLUGIN_VERSION, "Current version of entWatch", FCVAR_NOTIFY);
 	
 	G_hCookie_EnableDisplay = RegClientCookie("entwatch_enabledisplay", "", CookieAccess_Private);
 	G_hCookie_Restricted = RegClientCookie("entwatch_restricted", "", CookieAccess_Private);
