@@ -47,14 +47,14 @@ new entArraySize = 512;
 //----------------------------------------------------------------------------------------------------
 // Purpose: Color Settings
 //----------------------------------------------------------------------------------------------------
-new String:color_tag[16] 			= "E01B5D";
-new String:color_name[16] 			= "EDEDED";
+new String:color_tag[16] 		= "E01B5D";
+new String:color_name[16] 		= "EDEDED";
 new String:color_steamid[16] 		= "B2B2B2";
-new String:color_use[16] 			= "67ADDF";
+new String:color_use[16] 		= "67ADDF";
 new String:color_pickup[16] 		= "C9EF66";
-new String:color_drop[16] 			= "E562BA";
+new String:color_drop[16] 		= "E562BA";
 new String:color_disconnect[16] 	= "F1B567";
-new String:color_death[16] 			= "F1B567";
+new String:color_death[16] 		= "F1B567";
 new String:color_warning[16] 		= "F16767";
 
 //----------------------------------------------------------------------------------------------------
@@ -80,11 +80,11 @@ new bool:G_bConfigLoaded = false;
 //----------------------------------------------------------------------------------------------------
 public Plugin:myinfo =
 {
-	name 			= "entWatch",
-	author 			= "Prometheum & zaCade",
+	name 		= "entWatch",
+	author 		= "Prometheum & zaCade",
 	description 	= "Notify players about entity interactions.",
-	version 		= PLUGIN_VERSION,
-	url 			= "https://github.com/zaCade/entWatch"
+	version 	= PLUGIN_VERSION,
+	url 		= "https://github.com/zaCade/entWatch"
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -129,23 +129,23 @@ public OnMapStart()
 {
 	for (new index = 0; index < entArraySize; index++)
 	{
-		Format(entArray[index][ent_name], 			32, "");
+		Format(entArray[index][ent_name], 		32, "");
 		Format(entArray[index][ent_shortname], 		32, "");
-		Format(entArray[index][ent_color], 			32, "");
+		Format(entArray[index][ent_color], 		32, "");
 		Format(entArray[index][ent_buttonclass], 	32, "");
 		Format(entArray[index][ent_filtername], 	32, "");
 		entArray[index][ent_hasfiltername] 	= false;
 		entArray[index][ent_blockpickup] 	= false;
 		entArray[index][ent_allowtransfer] 	= false;
 		entArray[index][ent_forcedrop] 		= false;
-		entArray[index][ent_chat] 			= false;
-		entArray[index][ent_hud] 			= false;
+		entArray[index][ent_chat] 		= false;
+		entArray[index][ent_hud] 		= false;
 		entArray[index][ent_hammerid] 		= -1;
 		entArray[index][ent_weaponid] 		= -1;
 		entArray[index][ent_buttonid] 		= -1;
 		entArray[index][ent_ownerid] 		= -1;
-		entArray[index][ent_mode] 			= 0;
-		entArray[index][ent_uses] 			= 0;
+		entArray[index][ent_mode] 		= 0;
+		entArray[index][ent_uses] 		= 0;
 		entArray[index][ent_maxuses] 		= 0;
 		entArray[index][ent_cooldown] 		= 0;
 		entArray[index][ent_cooldowncount] 	= -1;
@@ -181,7 +181,7 @@ public Action:Event_RoundEnd(Handle:event, const String:name[], bool:dontBroadca
 			entArray[index][ent_weaponid] 		= -1;
 			entArray[index][ent_buttonid] 		= -1;
 			entArray[index][ent_ownerid] 		= -1;
-			entArray[index][ent_uses] 			= 0;
+			entArray[index][ent_uses] 		= 0;
 			entArray[index][ent_cooldowncount] 	= -1;
 		}
 	}
