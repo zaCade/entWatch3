@@ -8,7 +8,7 @@
 #include <sourcemod>
 #include <sdkhooks>
 #include <sdktools>
-#include <clientprefs>
+#include <clientprefs>x
 #tryinclude <morecolors>
 #tryinclude <entWatch>
 
