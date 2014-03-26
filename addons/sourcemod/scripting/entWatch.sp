@@ -106,7 +106,6 @@ public OnPluginStart()
 	RegAdminCmd("sm_eban", Command_Restrict, ADMFLAG_BAN);
 	RegAdminCmd("sm_eunban", Command_Unrestrict, ADMFLAG_BAN);
 	RegAdminCmd("sm_etransfer", Command_Transfer, ADMFLAG_BAN);
-	RegAdminCmd("sm_erename", Command_Rename, ADMFLAG_BAN);
 	RegAdminCmd("sm_efind", Command_Find, ADMFLAG_BAN);
 	
 	HookEvent("round_start", Event_RoundStart, EventHookMode_Pre);
@@ -747,34 +746,6 @@ public Action:Command_Transfer(client, args)
 	
 	CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%stransfered all items from \x07%s%N \x07%sto \x07%s%N", color_tag, color_name, client, color_warning, color_name, target, color_warning, color_name, reciever);
 	LogAction(client, -1, "%L transfered all items from %L to %L", client, target, reciever);
-	
-	return Plugin_Handled;
-}
-
-//----------------------------------------------------------------------------------------------------
-// Purpose:
-//----------------------------------------------------------------------------------------------------
-public Action:Command_Rename(client, args)
-{
-	if (GetCmdArgs() < 2)
-	{
-		CReplyToCommand(client, "\x07%s[entWatch] \x07%sUsage: sm_erename <target> <name>", color_tag, color_warning);
-		return Plugin_Handled;
-	}
-	
-	new String:target_argument[64];
-	GetCmdArg(1, target_argument, sizeof(target_argument));
-	
-	new target = FindTarget(client, target_argument, true);
-	
-	if (target == -1)
-		return Plugin_Handled;
-	
-	new String:name_argument[64];
-	GetCmdArg(2, name_argument, sizeof(name_argument));
-	
-	DispatchKeyValue(target, "targetname", name_argument);
-	LogAction(client, -1, "%L has renamed %L to \"%s\"", client, target, name_argument);
 	
 	return Plugin_Handled;
 }
