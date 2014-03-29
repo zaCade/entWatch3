@@ -106,7 +106,6 @@ public OnPluginStart()
 	RegAdminCmd("sm_eban", Command_Restrict, ADMFLAG_BAN);
 	RegAdminCmd("sm_eunban", Command_Unrestrict, ADMFLAG_BAN);
 	RegAdminCmd("sm_etransfer", Command_Transfer, ADMFLAG_BAN);
-	RegAdminCmd("sm_efind", Command_Find, ADMFLAG_BAN);
 	
 	HookEvent("round_start", Event_RoundStart, EventHookMode_Pre);
 	HookEvent("round_end", Event_RoundEnd, EventHookMode_Pre);
@@ -640,9 +639,8 @@ public Action:Command_Restrict(client, args)
 	new String:target_argument[64];
 	GetCmdArg(1, target_argument, sizeof(target_argument));
 	
-	new target = FindTarget(client, target_argument, true);
-	
-	if (target == -1)
+	new target = -1;
+	if ((target = FindTarget(client, target_argument, true)) == -1)
 		return Plugin_Handled;
 	
 	G_bRestricted[target] = true;
@@ -668,9 +666,8 @@ public Action:Command_Unrestrict(client, args)
 	new String:target_argument[64];
 	GetCmdArg(1, target_argument, sizeof(target_argument));
 	
-	new target = FindTarget(client, target_argument, true);
-	
-	if (target == -1)
+	new target = -1;
+	if ((target = FindTarget(client, target_argument, true)) == -1)
 		return Plugin_Handled;
 	
 	G_bRestricted[target] = false;
@@ -696,17 +693,18 @@ public Action:Command_Transfer(client, args)
 	new String:target_argument[64];
 	GetCmdArg(1, target_argument, sizeof(target_argument));
 	
-	new target = FindTarget(client, target_argument, true);
-	
-	if (target == -1)
-		return Plugin_Handled;
-	
 	new String:reciever_argument[64];
 	GetCmdArg(2, reciever_argument, sizeof(reciever_argument));
 	
-	new reciever = FindTarget(client, reciever_argument, true);
+	new target = -1;
+	if ((target = FindTarget(client, target_argument, true)) == -1)
+		return Plugin_Handled;
 	
-	if (reciever == -1)
+	new reciever = -1;
+	if ((reciever = FindTarget(client, reciever_argument, true)) == -1)
+		return Plugin_Handled;
+	
+	if (GetClientTeam(target) != GetClientTeam(reciever))
 		return Plugin_Handled;
 	
 	if (G_bConfigLoaded && !G_bRoundTransition)
@@ -746,38 +744,6 @@ public Action:Command_Transfer(client, args)
 	
 	CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%stransfered all items from \x07%s%N \x07%sto \x07%s%N", color_tag, color_name, client, color_warning, color_name, target, color_warning, color_name, reciever);
 	LogAction(client, -1, "%L transfered all items from %L to %L", client, target, reciever);
-	
-	return Plugin_Handled;
-}
-
-//----------------------------------------------------------------------------------------------------
-// Purpose:
-//----------------------------------------------------------------------------------------------------
-public Action:Command_Find(client, args)
-{
-	if (GetCmdArgs() < 1)
-	{
-		CReplyToCommand(client, "\x07%s[entWatch] \x07%sUsage: sm_efind <classname>", color_tag, color_warning);
-		return Plugin_Handled;
-	}
-	
-	new String:name_argument[64];
-	GetCmdArg(1, name_argument, sizeof(name_argument));
-	
-	new weapon = -1;
-	new String:buffer_targetname[32];
-	
-	while ((weapon = FindEntityByClassname(weapon, name_argument)) != -1)
-	{
-		if (IsValidEdict(weapon))
-		{
-			Entity_GetTargetName(weapon, buffer_targetname, sizeof(buffer_targetname));
-			PrintToConsole(client, "-> Classname: %s -> HammerID: %i -> Targetname: %s", name_argument, Entity_GetHammerID(weapon), buffer_targetname);
-		}
-	}
-	
-	CReplyToCommand(client, "\x07%s[entWatch] \x07%sDone finding all \"%s\" in the current map. A list has been printed in your console.", color_tag, color_warning, name_argument);
-	LogAction(client, -1, "%L has used the entity finder to find all \"%s\" in the map.", client, name_argument);
 	
 	return Plugin_Handled;
 }
