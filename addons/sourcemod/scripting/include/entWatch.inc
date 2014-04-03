@@ -3,7 +3,7 @@
 //----------------------------------------------------------------------------------------------------
 stock Entity_GetTargetName(entity, String:buffer[], size)
 {
-	return GetEntPropString(entity, Prop_Data, "m_iName", buffer, size);
+    return GetEntPropString(entity, Prop_Data, "m_iName", buffer, size);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -11,7 +11,7 @@ stock Entity_GetTargetName(entity, String:buffer[], size)
 //----------------------------------------------------------------------------------------------------
 stock Entity_GetParentName(entity, String:buffer[], size)
 {
-	return GetEntPropString(entity, Prop_Data, "m_iParent", buffer, size);
+    return GetEntPropString(entity, Prop_Data, "m_iParent", buffer, size);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -19,5 +19,5 @@ stock Entity_GetParentName(entity, String:buffer[], size)
 //----------------------------------------------------------------------------------------------------
 stock Entity_GetHammerID(entity)
 {
-	return GetEntProp(entity, Prop_Data, "m_iHammerID");
+    return GetEntProp(entity, Prop_Data, "m_iHammerID");
 }
