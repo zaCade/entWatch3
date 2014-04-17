@@ -2,11 +2,7 @@
 {
 	"supported map"
 	{
-<<<<<<< HEAD
 		"en" 	"The current map is supported by this plugin."
-=======
-		"en" 	"Current map is supported by this plugin."
->>>>>>> 39ed3ed89923705e84b369a4b49203b2caf9cf61
 	}
 	"use"
 	{
