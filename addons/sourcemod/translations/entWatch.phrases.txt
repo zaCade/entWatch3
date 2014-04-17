@@ -34,22 +34,22 @@
 	}
 	"status restricted"
 	{
-		"en" 	"You are currently restricted from using special items"
+		"en" 	"You are currently restricted from using special items."
 	}
 	"status unrestricted"
 	{
-		"en" 	"You are currently unrestricted from using special items"
+		"en" 	"You are currently unrestricted from using special items."
 	}
 	"help display"
 	{
-		"en" 	"You can write !hud to toggle the side display on and off"
+		"en" 	"You can write !hud to toggle the side display on and off."
 	}
 	"display enabled"
 	{
-		"en" 	"The hud is now enabled"
+		"en" 	"The hud is now enabled."
 	}
 	"display disabled"
 	{
-		"en" 	"The hud is now disabled"
+		"en" 	"The hud is now disabled."
 	}
 }
