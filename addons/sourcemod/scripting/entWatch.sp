@@ -34,11 +34,11 @@ enum entities
 	ent_weaponid,
 	ent_buttonid,
 	ent_ownerid,
-	ent_mode, // 0 = No button, 1 = Spam protection only, 2 = Cooldowns, 3 = Limited uses, 4 = Limited uses with cooldowns
+	ent_mode, // 0 = No button, 1 = Spam protection only, 2 = Cooldowns, 3 = Limited uses, 4 = Limited uses with cooldowns, 5 = Cooldowns after multiple uses.
 	ent_uses,
 	ent_maxuses,
 	ent_cooldown,
-	ent_cooldowncount,
+	ent_cooldowntime,
 };
 
 new entArray[512][entities];
@@ -47,15 +47,15 @@ new entArraySize = 512;
 //----------------------------------------------------------------------------------------------------
 // Purpose: Color Settings
 //----------------------------------------------------------------------------------------------------
-new String:color_tag[16]            = "E01B5D";
-new String:color_name[16]           = "EDEDED";
-new String:color_steamid[16]        = "B2B2B2";
-new String:color_use[16]            = "67ADDF";
-new String:color_pickup[16]         = "C9EF66";
-new String:color_drop[16]           = "E562BA";
-new String:color_disconnect[16]     = "F1B567";
-new String:color_death[16]          = "F1B567";
-new String:color_warning[16]        = "F16767";
+new String:color_tag[16]         = "E01B5D";
+new String:color_name[16]        = "EDEDED";
+new String:color_steamid[16]     = "B2B2B2";
+new String:color_use[16]         = "67ADDF";
+new String:color_pickup[16]      = "C9EF66";
+new String:color_drop[16]        = "E562BA";
+new String:color_disconnect[16]  = "F1B567";
+new String:color_death[16]       = "F1B567";
+new String:color_warning[16]     = "F16767";
 
 //----------------------------------------------------------------------------------------------------
 // Purpose: Client Settings
@@ -113,6 +113,7 @@ public OnPluginStart()
 	
 	CreateTimer(1.0, Timer_DisplayHUD, _, TIMER_REPEAT);
 	CreateTimer(1.0, Timer_Cooldowns, _, TIMER_REPEAT);
+	CreateTimer(30.0, Timer_Messages, _, TIMER_REPEAT);
 	
 	LoadTranslations("entWatch.phrases");
 	LoadTranslations("common.phrases");
@@ -142,11 +143,11 @@ public OnMapStart()
 		entArray[index][ent_weaponid]       = -1;
 		entArray[index][ent_buttonid]       = -1;
 		entArray[index][ent_ownerid]        = -1;
-		entArray[index][ent_mode]           = 0;
-		entArray[index][ent_uses]           = 0;
-		entArray[index][ent_maxuses]        = 0;
-		entArray[index][ent_cooldown]       = 0;
-		entArray[index][ent_cooldowncount]  = -1;
+		entArray[index][ent_mode]           = -1;
+		entArray[index][ent_uses]           = -1;
+		entArray[index][ent_maxuses]        = -1;
+		entArray[index][ent_cooldown]       = -1;
+		entArray[index][ent_cooldowntime]   = -1;
 	}
 	
 	LoadColors();
@@ -160,7 +161,7 @@ public Action:Event_RoundStart(Handle:event, const String:name[], bool:dontBroad
 {
 	if (G_bConfigLoaded && G_bRoundTransition)
 	{
-		CPrintToChatAll("\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "welcome");
+		CPrintToChatAll("\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "supported map");
 	}
 	
 	G_bRoundTransition = false;
@@ -179,8 +180,8 @@ public Action:Event_RoundEnd(Handle:event, const String:name[], bool:dontBroadca
 			entArray[index][ent_weaponid]       = -1;
 			entArray[index][ent_buttonid]       = -1;
 			entArray[index][ent_ownerid]        = -1;
+			entArray[index][ent_cooldowntime]   = -1;
 			entArray[index][ent_uses]           = 0;
-			entArray[index][ent_cooldowncount]  = -1;
 		}
 	}
 	
@@ -440,10 +441,10 @@ public Action:OnButtonUse(button, activator, caller, UseType:type, Float:value)
 					{
 						return Plugin_Changed;
 					}
-					else if (entArray[index][ent_mode] == 2 && entArray[index][ent_cooldowncount] <= -1)
+					else if (entArray[index][ent_mode] == 2 && entArray[index][ent_cooldowntime] <= -1)
 					{
 						CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
-						entArray[index][ent_cooldowncount] = entArray[index][ent_cooldown];
+						entArray[index][ent_cooldowntime] = entArray[index][ent_cooldown];
 						return Plugin_Changed;
 					}
 					else if (entArray[index][ent_mode] == 3 && entArray[index][ent_uses] < entArray[index][ent_maxuses])
@@ -452,11 +453,24 @@ public Action:OnButtonUse(button, activator, caller, UseType:type, Float:value)
 						entArray[index][ent_uses]++;
 						return Plugin_Changed;
 					}
-					else if (entArray[index][ent_mode] == 4 && entArray[index][ent_uses] < entArray[index][ent_maxuses] && entArray[index][ent_cooldowncount] <= -1)
+					else if (entArray[index][ent_mode] == 4 && entArray[index][ent_uses] < entArray[index][ent_maxuses] && entArray[index][ent_cooldowntime] <= -1)
 					{
 						CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
-						entArray[index][ent_cooldowncount] = entArray[index][ent_cooldown];
+						entArray[index][ent_cooldowntime] = entArray[index][ent_cooldown];
 						entArray[index][ent_uses]++;
+						return Plugin_Changed;
+					}
+					else if (entArray[index][ent_mode] == 5 && entArray[index][ent_cooldowntime] <= -1)
+					{
+						CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
+						entArray[index][ent_uses]++;
+						
+						if (entArray[index][ent_uses] >= entArray[index][ent_maxuses])
+						{
+							entArray[index][ent_cooldowntime] = entArray[index][ent_cooldown]
+							entArray[index][ent_uses] = 0;
+						}
+						
 						return Plugin_Changed;
 					}
 					
@@ -488,9 +502,9 @@ public Action:Timer_DisplayHUD(Handle:timer)
 				{
 					if (entArray[index][ent_mode] == 2)
 					{
-						if (entArray[index][ent_cooldowncount] > 0)
+						if (entArray[index][ent_cooldowntime] > 0)
 						{
-							Format(buffer_temp, sizeof(buffer_temp), "%s[%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_cooldowncount], entArray[index][ent_ownerid]);
+							Format(buffer_temp, sizeof(buffer_temp), "%s[%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_cooldowntime], entArray[index][ent_ownerid]);
 						}
 						else
 						{
@@ -510,9 +524,9 @@ public Action:Timer_DisplayHUD(Handle:timer)
 					}
 					else if (entArray[index][ent_mode] == 4)
 					{
-						if (entArray[index][ent_cooldowncount] > 0)
+						if (entArray[index][ent_cooldowntime] > 0)
 						{
-							Format(buffer_temp, sizeof(buffer_temp), "%s[%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_cooldowncount], entArray[index][ent_ownerid]);
+							Format(buffer_temp, sizeof(buffer_temp), "%s[%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_cooldowntime], entArray[index][ent_ownerid]);
 						}
 						else
 						{
@@ -524,6 +538,17 @@ public Action:Timer_DisplayHUD(Handle:timer)
 							{
 								Format(buffer_temp, sizeof(buffer_temp), "%s[%s]: %N\n", entArray[index][ent_shortname], "D", entArray[index][ent_ownerid]);
 							}
+						}
+					}
+					else if (entArray[index][ent_mode] == 5)
+					{
+						if (entArray[index][ent_cooldowntime] > 0)
+						{
+							Format(buffer_temp, sizeof(buffer_temp), "%s[%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_cooldowntime], entArray[index][ent_ownerid]);
+						}
+						else
+						{
+							Format(buffer_temp, sizeof(buffer_temp), "%s[%d/%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_uses], entArray[index][ent_maxuses], entArray[index][ent_ownerid]);
 						}
 					}
 					else
@@ -564,9 +589,30 @@ public Action:Timer_Cooldowns(Handle:timer)
 	{
 		for (new index = 0; index < entArraySize; index++)
 		{
-			if (entArray[index][ent_cooldowncount] >= 0)
+			if (entArray[index][ent_cooldowntime] >= 0)
 			{
-				entArray[index][ent_cooldowncount]--;
+				entArray[index][ent_cooldowntime]--;
+			}
+		}
+	}
+}
+
+//----------------------------------------------------------------------------------------------------
+// Purpose:
+//----------------------------------------------------------------------------------------------------
+public Action:Timer_Messages(Handle:timer)
+{
+	if (G_bConfigLoaded && !G_bRoundTransition)
+	{
+		switch(GetRandomInt(1, 2))
+		{
+			case(1):
+			{
+				CPrintToChatAll("\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "help restrict");
+			}
+			case(2):
+			{
+				CPrintToChatAll("\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "help display");
 			}
 		}
 	}
@@ -581,13 +627,13 @@ public Action:Command_ToggleHUD(client, args)
 	{
 		if (G_bEnableDisplay[client])
 		{
-			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "hud disabled");
+			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "display enabled");
 			SetClientCookie(client, G_hCookie_EnableDisplay, "0");
 			G_bEnableDisplay[client] = false;
 		}
 		else
 		{
-			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "hud enabled");
+			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "display disabled");
 			SetClientCookie(client, G_hCookie_EnableDisplay, "1");
 			G_bEnableDisplay[client] = true;
 		}
@@ -609,11 +655,11 @@ public Action:Command_Status(client, args)
 	{
 		if (G_bRestricted[client])
 		{
-			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "you are restricted");
+			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "status restricted");
 		}
 		else
 		{
-			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "you are not restricted");
+			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "status unrestricted");
 		}
 	}
 	else
