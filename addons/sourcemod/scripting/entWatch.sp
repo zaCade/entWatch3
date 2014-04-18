@@ -113,7 +113,6 @@ public OnPluginStart()
 	
 	CreateTimer(1.0, Timer_DisplayHUD, _, TIMER_REPEAT);
 	CreateTimer(1.0, Timer_Cooldowns, _, TIMER_REPEAT);
-	CreateTimer(60.0, Timer_Messages, _, TIMER_REPEAT);
 	
 	LoadTranslations("entWatch.phrases");
 	LoadTranslations("common.phrases");
@@ -161,7 +160,7 @@ public Action:Event_RoundStart(Handle:event, const String:name[], bool:dontBroad
 {
 	if (G_bConfigLoaded && G_bRoundTransition)
 	{
-		CPrintToChatAll("\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "supported map");
+		CPrintToChatAll("\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "welcome");
 	}
 	
 	G_bRoundTransition = false;
@@ -592,27 +591,6 @@ public Action:Timer_Cooldowns(Handle:timer)
 			if (entArray[index][ent_cooldowntime] >= 0)
 			{
 				entArray[index][ent_cooldowntime]--;
-			}
-		}
-	}
-}
-
-//----------------------------------------------------------------------------------------------------
-// Purpose:
-//----------------------------------------------------------------------------------------------------
-public Action:Timer_Messages(Handle:timer)
-{
-	if (G_bConfigLoaded && !G_bRoundTransition)
-	{
-		switch(GetRandomInt(1, 2))
-		{
-			case(1):
-			{
-				CPrintToChatAll("\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "help restrict");
-			}
-			case(2):
-			{
-				CPrintToChatAll("\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "help display");
 			}
 		}
 	}
