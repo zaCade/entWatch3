@@ -143,10 +143,10 @@ public OnMapStart()
 		entArray[index][ent_weaponid]       = -1;
 		entArray[index][ent_buttonid]       = -1;
 		entArray[index][ent_ownerid]        = -1;
-		entArray[index][ent_mode]           = -1;
-		entArray[index][ent_uses]           = -1;
-		entArray[index][ent_maxuses]        = -1;
-		entArray[index][ent_cooldown]       = -1;
+		entArray[index][ent_mode]           = 0;
+		entArray[index][ent_uses]           = 0;
+		entArray[index][ent_maxuses]        = 0;
+		entArray[index][ent_cooldown]       = 0;
 		entArray[index][ent_cooldowntime]   = -1;
 	}
 	
