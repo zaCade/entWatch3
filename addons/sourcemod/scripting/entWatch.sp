@@ -113,7 +113,7 @@ public OnPluginStart()
 	
 	CreateTimer(1.0, Timer_DisplayHUD, _, TIMER_REPEAT);
 	CreateTimer(1.0, Timer_Cooldowns, _, TIMER_REPEAT);
-	CreateTimer(30.0, Timer_Messages, _, TIMER_REPEAT);
+	CreateTimer(60.0, Timer_Messages, _, TIMER_REPEAT);
 	
 	LoadTranslations("entWatch.phrases");
 	LoadTranslations("common.phrases");
