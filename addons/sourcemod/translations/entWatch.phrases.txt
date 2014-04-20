@@ -30,11 +30,11 @@
 	}
 	"status restricted"
 	{
-		"en" 	"You are currently restricted from using special items."
+		"en" 	"You are currently restricted."
 	}
 	"status unrestricted"
 	{
-		"en" 	"You are currently unrestricted from using special items."
+		"en" 	"You are currently unrestricted."
 	}
 	"display enabled"
 	{

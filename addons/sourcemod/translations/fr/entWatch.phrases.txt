@@ -1,0 +1,47 @@
+"Phrases"
+{
+	"welcome"
+	{
+		"fr" 	"La map actuelle fonctionne avec ce plugin."
+	}
+	"use"
+	{
+		"fr" 	"a utilisé"
+	}
+	"pickup"
+	{
+		"fr" 	"a pris"
+	}
+	"drop"
+	{
+		"fr" 	"a jeté"
+	}
+	"death"
+	{
+		"fr" 	"est mort avec"
+	}
+	"disconnect"
+	{
+		"fr" 	"s'est deconnecté avec"
+	}
+	"cookies loading"
+	{
+		"fr" 	"Merci d'attendre. Vos réglages sont en cours de chargement."
+	}
+	"status restricted"
+	{
+		"fr" 	"Vous êtes actuellement restreint."
+	}
+	"status unrestricted"
+	{
+		"fr" 	"Vous n'êtes pas restreint."
+	}
+	"display enabled"
+	{
+		"fr" 	"Le hud est maintenant activé."
+	}
+	"display disabled"
+	{
+		"fr" 	"Le hud est maintenant désactivé."
+	}
+}
