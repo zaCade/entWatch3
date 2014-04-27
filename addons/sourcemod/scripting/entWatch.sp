@@ -605,13 +605,13 @@ public Action:Command_ToggleHUD(client, args)
 	{
 		if (G_bEnableDisplay[client])
 		{
-			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "display enabled");
+			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "display disabled");
 			SetClientCookie(client, G_hCookie_EnableDisplay, "0");
 			G_bEnableDisplay[client] = false;
 		}
 		else
 		{
-			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "display disabled");
+			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "display enabled");
 			SetClientCookie(client, G_hCookie_EnableDisplay, "1");
 			G_bEnableDisplay[client] = true;
 		}
