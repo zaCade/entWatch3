@@ -12,7 +12,7 @@
 #tryinclude <morecolors>
 #tryinclude <entWatch>
 
-#define PLUGIN_VERSION "3.0.0"
+#define PLUGIN_VERSION "3.0.1"
 
 //----------------------------------------------------------------------------------------------------
 // Purpose: Entity Data
@@ -60,17 +60,18 @@ new String:color_warning[16]     = "F16767";
 //----------------------------------------------------------------------------------------------------
 // Purpose: Client Settings
 //----------------------------------------------------------------------------------------------------
-new Handle:G_hCookie_EnableDisplay  = INVALID_HANDLE;
-new Handle:G_hCookie_Restricted     = INVALID_HANDLE;
+new Handle:G_hCookie_Display     = INVALID_HANDLE;
+new Handle:G_hCookie_Restricted  = INVALID_HANDLE;
 
-new bool:G_bEnableDisplay[MAXPLAYERS + 1]  = false;
-new bool:G_bRestricted[MAXPLAYERS + 1]     = false;
+new bool:G_bDisplay[MAXPLAYERS + 1]     = false;
+new bool:G_bRestricted[MAXPLAYERS + 1]  = false;
 
 //----------------------------------------------------------------------------------------------------
 // Purpose: Plugin Settings
 //----------------------------------------------------------------------------------------------------
-new Handle:G_hCvar_EnableDisplay  = INVALID_HANDLE;
-new Handle:G_hCvar_ConfigName     = INVALID_HANDLE;
+new Handle:G_hCvar_DisplayEnabled    = INVALID_HANDLE;
+new Handle:G_hCvar_DisplayCooldowns  = INVALID_HANDLE;
+new Handle:G_hCvar_ConfigColor       = INVALID_HANDLE;
 
 new bool:G_bRoundTransition  = false;
 new bool:G_bConfigLoaded     = false;
@@ -94,11 +95,12 @@ public OnPluginStart()
 {
 	CreateConVar("entwatch_version", PLUGIN_VERSION, "Current version of entWatch", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	
-	G_hCvar_EnableDisplay  = CreateConVar("entwatch_enabledisplay", "1", "Allow players to display the hud.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	G_hCvar_ConfigName     = CreateConVar("entwatch_configname", "color_classic", "The name of the color config.", FCVAR_PLUGIN);
+	G_hCvar_DisplayEnabled    = CreateConVar("entwatch_display_enable", "1", "Disable/Enable the display.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
+	G_hCvar_DisplayCooldowns  = CreateConVar("entwatch_display_cooldowns", "1", "Show/Hide the cooldowns on the display.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
+	G_hCvar_ConfigColor       = CreateConVar("entwatch_config_color", "color_classic", "The name of the color config.", FCVAR_PLUGIN);
 	
-	G_hCookie_EnableDisplay  = RegClientCookie("entwatch_enabledisplay", "", CookieAccess_Private);
-	G_hCookie_Restricted     = RegClientCookie("entwatch_restricted", "", CookieAccess_Private);
+	G_hCookie_Display     = RegClientCookie("entwatch_display", "", CookieAccess_Private);
+	G_hCookie_Restricted  = RegClientCookie("entwatch_restricted", "", CookieAccess_Private);
 	
 	RegConsoleCmd("sm_hud", Command_ToggleHUD);
 	RegConsoleCmd("sm_status", Command_Status);
@@ -193,8 +195,8 @@ public Action:Event_RoundEnd(Handle:event, const String:name[], bool:dontBroadca
 public OnClientCookiesCached(client)
 {
 	new String:buffer_cookie[32];
-	GetClientCookie(client, G_hCookie_EnableDisplay, buffer_cookie, sizeof(buffer_cookie));
-	G_bEnableDisplay[client] = bool:StringToInt(buffer_cookie);
+	GetClientCookie(client, G_hCookie_Display, buffer_cookie, sizeof(buffer_cookie));
+	G_bDisplay[client] = bool:StringToInt(buffer_cookie);
 	
 	GetClientCookie(client, G_hCookie_Restricted, buffer_cookie, sizeof(buffer_cookie));
 	G_bRestricted[client] = bool:StringToInt(buffer_cookie);
@@ -211,7 +213,7 @@ public OnClientPutInServer(client)
 	
 	if (!AreClientCookiesCached(client))
 	{
-		G_bEnableDisplay[client] = false;
+		G_bDisplay[client] = false;
 		G_bRestricted[client] = false;
 	}
 }
@@ -225,23 +227,20 @@ public OnClientDisconnect(client)
 	{
 		for (new index = 0; index < entArraySize; index++)
 		{
-			if (entArray[index][ent_ownerid] != -1)
+			if (entArray[index][ent_ownerid] != -1 && entArray[index][ent_ownerid] == client)
 			{
-				if (entArray[index][ent_ownerid] == client)
+				entArray[index][ent_ownerid] = -1;
+				
+				if (entArray[index][ent_forcedrop] && IsValidEdict(entArray[index][ent_weaponid]))
+					SDKHooks_DropWeapon(client, entArray[index][ent_weaponid]);
+				
+				if (entArray[index][ent_chat])
 				{
-					entArray[index][ent_ownerid] = -1;
+					new String:buffer_steamid[32];
+					GetClientAuthString(client, buffer_steamid, sizeof(buffer_steamid));
+					ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
 					
-					if (entArray[index][ent_forcedrop] && IsValidEdict(entArray[index][ent_weaponid]))
-						SDKHooks_DropWeapon(client, entArray[index][ent_weaponid]);
-					
-					if (entArray[index][ent_chat])
-					{
-						new String:buffer_steamid[32];
-						GetClientAuthString(client, buffer_steamid, sizeof(buffer_steamid));
-						ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
-						
-						CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_disconnect, color_steamid, buffer_steamid, color_disconnect, color_disconnect, "disconnect", entArray[index][ent_color], entArray[index][ent_name]);
-					}
+					CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_disconnect, color_steamid, buffer_steamid, color_disconnect, color_disconnect, "disconnect", entArray[index][ent_color], entArray[index][ent_name]);
 				}
 			}
 		}
@@ -251,7 +250,7 @@ public OnClientDisconnect(client)
 	SDKUnhook(client, SDKHook_WeaponEquipPost, OnWeaponEquip);
 	SDKUnhook(client, SDKHook_WeaponCanUse, OnWeaponCanUse);
 	
-	G_bEnableDisplay[client] = false;
+	G_bDisplay[client] = false;
 	G_bRestricted[client] = false;
 }
 
@@ -266,23 +265,20 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 	{
 		for (new index = 0; index < entArraySize; index++)
 		{
-			if (entArray[index][ent_ownerid] != -1)
+			if (entArray[index][ent_ownerid] != -1 && entArray[index][ent_ownerid] == client)
 			{
-				if (entArray[index][ent_ownerid] == client)
+				entArray[index][ent_ownerid] = -1;
+				
+				if (entArray[index][ent_forcedrop] && IsValidEdict(entArray[index][ent_weaponid]))
+					SDKHooks_DropWeapon(client, entArray[index][ent_weaponid]);
+				
+				if (entArray[index][ent_chat])
 				{
-					entArray[index][ent_ownerid] = -1;
+					new String:buffer_steamid[32];
+					GetClientAuthString(client, buffer_steamid, sizeof(buffer_steamid));
+					ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
 					
-					if (entArray[index][ent_forcedrop] && IsValidEdict(entArray[index][ent_weaponid]))
-						SDKHooks_DropWeapon(client, entArray[index][ent_weaponid]);
-					
-					if (entArray[index][ent_chat])
-					{
-						new String:buffer_steamid[32];
-						GetClientAuthString(client, buffer_steamid, sizeof(buffer_steamid));
-						ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
-						
-						CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_death, color_steamid, buffer_steamid, color_death, color_death, "death", entArray[index][ent_color], entArray[index][ent_name]);
-					}
+					CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_death, color_steamid, buffer_steamid, color_death, color_death, "death", entArray[index][ent_color], entArray[index][ent_name]);
 				}
 			}
 		}
@@ -300,23 +296,20 @@ public Action:OnWeaponEquip(client, weapon)
 		{
 			if (entArray[index][ent_hammerid] == Entity_GetHammerID(weapon))
 			{
-				if (entArray[index][ent_weaponid] != -1)
+				if (entArray[index][ent_weaponid] != -1 && entArray[index][ent_weaponid] == weapon)
 				{
-					if (entArray[index][ent_weaponid] == weapon)
+					entArray[index][ent_ownerid] = client;
+					
+					if (entArray[index][ent_chat])
 					{
-						entArray[index][ent_ownerid] = client;
+						new String:buffer_steamid[32];
+						GetClientAuthString(client, buffer_steamid, sizeof(buffer_steamid));
+						ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
 						
-						if (entArray[index][ent_chat])
-						{
-							new String:buffer_steamid[32];
-							GetClientAuthString(client, buffer_steamid, sizeof(buffer_steamid));
-							ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
-							
-							CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_pickup, color_steamid, buffer_steamid, color_pickup, color_pickup, "pickup", entArray[index][ent_color], entArray[index][ent_name]);
-						}
-						
-						break;
+						CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_pickup, color_steamid, buffer_steamid, color_pickup, color_pickup, "pickup", entArray[index][ent_color], entArray[index][ent_name]);
 					}
+					
+					break;
 				}
 			}
 		}
@@ -334,23 +327,20 @@ public Action:OnWeaponDrop(client, weapon)
 		{
 			if (entArray[index][ent_hammerid] == Entity_GetHammerID(weapon))
 			{
-				if (entArray[index][ent_weaponid] != -1)
+				if (entArray[index][ent_weaponid] != -1 && entArray[index][ent_weaponid] == weapon)
 				{
-					if (entArray[index][ent_weaponid] == weapon)
+					entArray[index][ent_ownerid] = -1;
+					
+					if (entArray[index][ent_chat])
 					{
-						entArray[index][ent_ownerid] = -1;
+						new String:buffer_steamid[32];
+						GetClientAuthString(client, buffer_steamid, sizeof(buffer_steamid));
+						ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
 						
-						if (entArray[index][ent_chat])
-						{
-							new String:buffer_steamid[32];
-							GetClientAuthString(client, buffer_steamid, sizeof(buffer_steamid));
-							ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
-							
-							CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_drop, color_steamid, buffer_steamid, color_drop, color_drop, "drop", entArray[index][ent_color], entArray[index][ent_name]);
-						}
-						
-						break;
+						CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_drop, color_steamid, buffer_steamid, color_drop, color_drop, "drop", entArray[index][ent_color], entArray[index][ent_name]);
 					}
+					
+					break;
 				}
 			}
 		}
@@ -422,59 +412,56 @@ public Action:OnButtonUse(button, activator, caller, UseType:type, Float:value)
 	{
 		for (new index = 0; index < entArraySize; index++)
 		{
-			if (entArray[index][ent_buttonid] != -1)
+			if (entArray[index][ent_buttonid] != -1 && entArray[index][ent_buttonid] == button)
 			{
-				if (entArray[index][ent_buttonid] == button)
-				{
-					if (entArray[index][ent_ownerid] != activator && entArray[index][ent_ownerid] != caller)
-						return Plugin_Handled;
-					
-					if (entArray[index][ent_hasfiltername])
-						DispatchKeyValue(activator, "targetname", entArray[index][ent_filtername]);
-					
-					new String:buffer_steamid[32];
-					GetClientAuthString(activator, buffer_steamid, sizeof(buffer_steamid));
-					ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
-					
-					if (entArray[index][ent_mode] == 1)
-					{
-						return Plugin_Changed;
-					}
-					else if (entArray[index][ent_mode] == 2 && entArray[index][ent_cooldowntime] <= -1)
-					{
-						CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
-						entArray[index][ent_cooldowntime] = entArray[index][ent_cooldown];
-						return Plugin_Changed;
-					}
-					else if (entArray[index][ent_mode] == 3 && entArray[index][ent_uses] < entArray[index][ent_maxuses])
-					{
-						CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
-						entArray[index][ent_uses]++;
-						return Plugin_Changed;
-					}
-					else if (entArray[index][ent_mode] == 4 && entArray[index][ent_uses] < entArray[index][ent_maxuses] && entArray[index][ent_cooldowntime] <= -1)
-					{
-						CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
-						entArray[index][ent_cooldowntime] = entArray[index][ent_cooldown];
-						entArray[index][ent_uses]++;
-						return Plugin_Changed;
-					}
-					else if (entArray[index][ent_mode] == 5 && entArray[index][ent_cooldowntime] <= -1)
-					{
-						CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
-						entArray[index][ent_uses]++;
-						
-						if (entArray[index][ent_uses] >= entArray[index][ent_maxuses])
-						{
-							entArray[index][ent_cooldowntime] = entArray[index][ent_cooldown]
-							entArray[index][ent_uses] = 0;
-						}
-						
-						return Plugin_Changed;
-					}
-					
+				if (entArray[index][ent_ownerid] != activator && entArray[index][ent_ownerid] != caller)
 					return Plugin_Handled;
+				
+				if (entArray[index][ent_hasfiltername])
+					DispatchKeyValue(activator, "targetname", entArray[index][ent_filtername]);
+				
+				new String:buffer_steamid[32];
+				GetClientAuthString(activator, buffer_steamid, sizeof(buffer_steamid));
+				ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
+				
+				if (entArray[index][ent_mode] == 1)
+				{
+					return Plugin_Changed;
 				}
+				else if (entArray[index][ent_mode] == 2 && entArray[index][ent_cooldowntime] <= -1)
+				{
+					CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
+					entArray[index][ent_cooldowntime] = entArray[index][ent_cooldown];
+					return Plugin_Changed;
+				}
+				else if (entArray[index][ent_mode] == 3 && entArray[index][ent_uses] < entArray[index][ent_maxuses])
+				{
+					CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
+					entArray[index][ent_uses]++;
+					return Plugin_Changed;
+				}
+				else if (entArray[index][ent_mode] == 4 && entArray[index][ent_uses] < entArray[index][ent_maxuses] && entArray[index][ent_cooldowntime] <= -1)
+				{
+					CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
+					entArray[index][ent_cooldowntime] = entArray[index][ent_cooldown];
+					entArray[index][ent_uses]++;
+					return Plugin_Changed;
+				}
+				else if (entArray[index][ent_mode] == 5 && entArray[index][ent_cooldowntime] <= -1)
+				{
+					CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
+					entArray[index][ent_uses]++;
+					
+					if (entArray[index][ent_uses] >= entArray[index][ent_maxuses])
+					{
+						entArray[index][ent_cooldowntime] = entArray[index][ent_cooldown]
+						entArray[index][ent_uses] = 0;
+					}
+					
+					return Plugin_Changed;
+				}
+				
+				return Plugin_Handled;
 			}
 		}
 	}
@@ -487,7 +474,7 @@ public Action:OnButtonUse(button, activator, caller, UseType:type, Float:value)
 //----------------------------------------------------------------------------------------------------
 public Action:Timer_DisplayHUD(Handle:timer)
 {
-	if (GetConVarBool(G_hCvar_EnableDisplay))
+	if (GetConVarBool(G_hCvar_DisplayEnabled))
 	{
 		if (G_bConfigLoaded && !G_bRoundTransition)
 		{
@@ -499,35 +486,20 @@ public Action:Timer_DisplayHUD(Handle:timer)
 				
 				if (entArray[index][ent_hud] && entArray[index][ent_ownerid] != -1)
 				{
-					if (entArray[index][ent_mode] == 2)
+					if (GetConVarBool(G_hCvar_DisplayCooldowns))
 					{
-						if (entArray[index][ent_cooldowntime] > 0)
+						if (entArray[index][ent_mode] == 2)
 						{
-							Format(buffer_temp, sizeof(buffer_temp), "%s[%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_cooldowntime], entArray[index][ent_ownerid]);
+							if (entArray[index][ent_cooldowntime] > 0)
+							{
+								Format(buffer_temp, sizeof(buffer_temp), "%s[%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_cooldowntime], entArray[index][ent_ownerid]);
+							}
+							else
+							{
+								Format(buffer_temp, sizeof(buffer_temp), "%s[%s]: %N\n", entArray[index][ent_shortname], "R", entArray[index][ent_ownerid]);
+							}
 						}
-						else
-						{
-							Format(buffer_temp, sizeof(buffer_temp), "%s[%s]: %N\n", entArray[index][ent_shortname], "R", entArray[index][ent_ownerid]);
-						}
-					}
-					else if (entArray[index][ent_mode] == 3)
-					{
-						if (entArray[index][ent_uses] < entArray[index][ent_maxuses])
-						{
-							Format(buffer_temp, sizeof(buffer_temp), "%s[%d/%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_uses], entArray[index][ent_maxuses], entArray[index][ent_ownerid]);
-						}
-						else
-						{
-							Format(buffer_temp, sizeof(buffer_temp), "%s[%s]: %N\n", entArray[index][ent_shortname], "D", entArray[index][ent_ownerid]);
-						}
-					}
-					else if (entArray[index][ent_mode] == 4)
-					{
-						if (entArray[index][ent_cooldowntime] > 0)
-						{
-							Format(buffer_temp, sizeof(buffer_temp), "%s[%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_cooldowntime], entArray[index][ent_ownerid]);
-						}
-						else
+						else if (entArray[index][ent_mode] == 3)
 						{
 							if (entArray[index][ent_uses] < entArray[index][ent_maxuses])
 							{
@@ -538,21 +510,43 @@ public Action:Timer_DisplayHUD(Handle:timer)
 								Format(buffer_temp, sizeof(buffer_temp), "%s[%s]: %N\n", entArray[index][ent_shortname], "D", entArray[index][ent_ownerid]);
 							}
 						}
-					}
-					else if (entArray[index][ent_mode] == 5)
-					{
-						if (entArray[index][ent_cooldowntime] > 0)
+						else if (entArray[index][ent_mode] == 4)
 						{
-							Format(buffer_temp, sizeof(buffer_temp), "%s[%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_cooldowntime], entArray[index][ent_ownerid]);
+							if (entArray[index][ent_cooldowntime] > 0)
+							{
+								Format(buffer_temp, sizeof(buffer_temp), "%s[%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_cooldowntime], entArray[index][ent_ownerid]);
+							}
+							else
+							{
+								if (entArray[index][ent_uses] < entArray[index][ent_maxuses])
+								{
+									Format(buffer_temp, sizeof(buffer_temp), "%s[%d/%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_uses], entArray[index][ent_maxuses], entArray[index][ent_ownerid]);
+								}
+								else
+								{
+									Format(buffer_temp, sizeof(buffer_temp), "%s[%s]: %N\n", entArray[index][ent_shortname], "D", entArray[index][ent_ownerid]);
+								}
+							}
+						}
+						else if (entArray[index][ent_mode] == 5)
+						{
+							if (entArray[index][ent_cooldowntime] > 0)
+							{
+								Format(buffer_temp, sizeof(buffer_temp), "%s[%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_cooldowntime], entArray[index][ent_ownerid]);
+							}
+							else
+							{
+								Format(buffer_temp, sizeof(buffer_temp), "%s[%d/%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_uses], entArray[index][ent_maxuses], entArray[index][ent_ownerid]);
+							}
 						}
 						else
 						{
-							Format(buffer_temp, sizeof(buffer_temp), "%s[%d/%d]: %N\n", entArray[index][ent_shortname], entArray[index][ent_uses], entArray[index][ent_maxuses], entArray[index][ent_ownerid]);
+							Format(buffer_temp, sizeof(buffer_temp), "%s[%s]: %N\n", entArray[index][ent_shortname], "N/A", entArray[index][ent_ownerid]);
 						}
 					}
 					else
 					{
-						Format(buffer_temp, sizeof(buffer_temp), "%s[%s]: %N\n", entArray[index][ent_shortname], "N/A", entArray[index][ent_ownerid]);
+						Format(buffer_temp, sizeof(buffer_temp), "%s: %N\n", entArray[index][ent_shortname], entArray[index][ent_ownerid]);
 					}
 				}
 				
@@ -566,7 +560,7 @@ public Action:Timer_DisplayHUD(Handle:timer)
 			{
 				if (IsClientConnected(ply) && IsClientInGame(ply))
 				{
-					if (G_bEnableDisplay[ply])
+					if (G_bDisplay[ply])
 					{
 						new Handle:hBuffer = StartMessageOne("KeyHintText", ply);
 						BfWriteByte(hBuffer, 1);
@@ -603,17 +597,17 @@ public Action:Command_ToggleHUD(client, args)
 {
 	if (AreClientCookiesCached(client))
 	{
-		if (G_bEnableDisplay[client])
+		if (G_bDisplay[client])
 		{
 			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "display disabled");
-			SetClientCookie(client, G_hCookie_EnableDisplay, "0");
-			G_bEnableDisplay[client] = false;
+			SetClientCookie(client, G_hCookie_Display, "0");
+			G_bDisplay[client] = false;
 		}
 		else
 		{
 			CReplyToCommand(client, "\x07%s[entWatch] \x07%s%t", color_tag, color_warning, "display enabled");
-			SetClientCookie(client, G_hCookie_EnableDisplay, "1");
-			G_bEnableDisplay[client] = true;
+			SetClientCookie(client, G_hCookie_Display, "1");
+			G_bDisplay[client] = true;
 		}
 	}
 	else
@@ -781,7 +775,7 @@ stock LoadColors()
 	new String:buffer_path[PLATFORM_MAX_PATH];
 	new String:buffer_temp[16];
 	
-	GetConVarString(G_hCvar_ConfigName, buffer_config, sizeof(buffer_config));
+	GetConVarString(G_hCvar_ConfigColor, buffer_config, sizeof(buffer_config));
 	Format(buffer_path, sizeof(buffer_path), "cfg/sourcemod/entwatch/colors/%s.cfg", buffer_config);
 	FileToKeyValues(hKeyValues, buffer_path);
 	
