@@ -12,7 +12,7 @@
 #tryinclude <morecolors>
 #tryinclude <entWatch>
 
-#define PLUGIN_VERSION "3.0.1"
+#define PLUGIN_VERSION "3.0.2"
 
 //----------------------------------------------------------------------------------------------------
 // Purpose: Entity Data
@@ -71,6 +71,7 @@ new bool:G_bRestricted[MAXPLAYERS + 1]  = false;
 //----------------------------------------------------------------------------------------------------
 new Handle:G_hCvar_DisplayEnabled    = INVALID_HANDLE;
 new Handle:G_hCvar_DisplayCooldowns  = INVALID_HANDLE;
+new Handle:G_hCvar_ModeTeamOnly      = INVALID_HANDLE;
 new Handle:G_hCvar_ConfigColor       = INVALID_HANDLE;
 
 new bool:G_bRoundTransition  = false;
@@ -95,8 +96,9 @@ public OnPluginStart()
 {
 	CreateConVar("entwatch_version", PLUGIN_VERSION, "Current version of entWatch", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	
-	G_hCvar_DisplayEnabled    = CreateConVar("entwatch_display_enable", "1", "Disable/Enable the display.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
+	G_hCvar_DisplayEnabled    = CreateConVar("entwatch_display_enable", "1", "Enable/Disable the display.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
 	G_hCvar_DisplayCooldowns  = CreateConVar("entwatch_display_cooldowns", "1", "Show/Hide the cooldowns on the display.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
+	G_hCvar_ModeTeamOnly      = CreateConVar("entwatch_mode_teamonly", "1", "Enable/Disable team only mode.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
 	G_hCvar_ConfigColor       = CreateConVar("entwatch_config_color", "color_classic", "The name of the color config.", FCVAR_PLUGIN);
 	
 	G_hCookie_Display     = RegClientCookie("entwatch_display", "", CookieAccess_Private);
@@ -240,7 +242,16 @@ public OnClientDisconnect(client)
 					GetClientAuthString(client, buffer_steamid, sizeof(buffer_steamid));
 					ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
 					
-					CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_disconnect, color_steamid, buffer_steamid, color_disconnect, color_disconnect, "disconnect", entArray[index][ent_color], entArray[index][ent_name]);
+					for (new ply = 1; ply <= MaxClients; ply++)
+					{
+						if (IsClientConnected(ply) && IsClientInGame(ply))
+						{
+							if (!GetConVarBool(G_hCvar_ModeTeamOnly) || (GetConVarBool(G_hCvar_ModeTeamOnly) && GetClientTeam(ply) == GetClientTeam(client) || CheckCommandAccess(ply, "entWatch_chat", ADMFLAG_CHAT)))
+							{
+								CPrintToChat(ply, "\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_disconnect, color_steamid, buffer_steamid, color_disconnect, color_disconnect, "disconnect", entArray[index][ent_color], entArray[index][ent_name]);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -278,7 +289,16 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 					GetClientAuthString(client, buffer_steamid, sizeof(buffer_steamid));
 					ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
 					
-					CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_death, color_steamid, buffer_steamid, color_death, color_death, "death", entArray[index][ent_color], entArray[index][ent_name]);
+					for (new ply = 1; ply <= MaxClients; ply++)
+					{
+						if (IsClientConnected(ply) && IsClientInGame(ply))
+						{
+							if (!GetConVarBool(G_hCvar_ModeTeamOnly) || (GetConVarBool(G_hCvar_ModeTeamOnly) && GetClientTeam(ply) == GetClientTeam(client) || CheckCommandAccess(ply, "entWatch_chat", ADMFLAG_CHAT)))
+							{
+								CPrintToChat(ply, "\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_death, color_steamid, buffer_steamid, color_death, color_death, "death", entArray[index][ent_color], entArray[index][ent_name]);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -306,7 +326,16 @@ public Action:OnWeaponEquip(client, weapon)
 						GetClientAuthString(client, buffer_steamid, sizeof(buffer_steamid));
 						ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
 						
-						CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_pickup, color_steamid, buffer_steamid, color_pickup, color_pickup, "pickup", entArray[index][ent_color], entArray[index][ent_name]);
+						for (new ply = 1; ply <= MaxClients; ply++)
+						{
+							if (IsClientConnected(ply) && IsClientInGame(ply))
+							{
+								if (!GetConVarBool(G_hCvar_ModeTeamOnly) || (GetConVarBool(G_hCvar_ModeTeamOnly) && GetClientTeam(ply) == GetClientTeam(client) || CheckCommandAccess(ply, "entWatch_chat", ADMFLAG_CHAT)))
+								{
+									CPrintToChat(ply, "\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_pickup, color_steamid, buffer_steamid, color_pickup, color_pickup, "pickup", entArray[index][ent_color], entArray[index][ent_name]);
+								}
+							}
+						}
 					}
 					
 					break;
@@ -337,7 +366,16 @@ public Action:OnWeaponDrop(client, weapon)
 						GetClientAuthString(client, buffer_steamid, sizeof(buffer_steamid));
 						ReplaceString(buffer_steamid, sizeof(buffer_steamid), "STEAM_", "", true);
 						
-						CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_drop, color_steamid, buffer_steamid, color_drop, color_drop, "drop", entArray[index][ent_color], entArray[index][ent_name]);
+						for (new ply = 1; ply <= MaxClients; ply++)
+						{
+							if (IsClientConnected(ply) && IsClientInGame(ply))
+							{
+								if (!GetConVarBool(G_hCvar_ModeTeamOnly) || (GetConVarBool(G_hCvar_ModeTeamOnly) && GetClientTeam(ply) == GetClientTeam(client) || CheckCommandAccess(ply, "entWatch_chat", ADMFLAG_CHAT)))
+								{
+									CPrintToChat(ply, "\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, client, color_drop, color_steamid, buffer_steamid, color_drop, color_drop, "drop", entArray[index][ent_color], entArray[index][ent_name]);
+								}
+							}
+						}
 					}
 					
 					break;
@@ -430,31 +468,70 @@ public Action:OnButtonUse(button, activator, caller, UseType:type, Float:value)
 				}
 				else if (entArray[index][ent_mode] == 2 && entArray[index][ent_cooldowntime] <= -1)
 				{
-					CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
+					for (new ply = 1; ply <= MaxClients; ply++)
+					{
+						if (IsClientConnected(ply) && IsClientInGame(ply))
+						{
+							if (!GetConVarBool(G_hCvar_ModeTeamOnly) || (GetConVarBool(G_hCvar_ModeTeamOnly) && GetClientTeam(ply) == GetClientTeam(activator) || CheckCommandAccess(ply, "entWatch_chat", ADMFLAG_CHAT)))
+							{
+								CPrintToChat(ply, "\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
+							}
+						}
+					}
+					
 					entArray[index][ent_cooldowntime] = entArray[index][ent_cooldown];
 					return Plugin_Changed;
 				}
 				else if (entArray[index][ent_mode] == 3 && entArray[index][ent_uses] < entArray[index][ent_maxuses])
 				{
-					CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
+					for (new ply = 1; ply <= MaxClients; ply++)
+					{
+						if (IsClientConnected(ply) && IsClientInGame(ply))
+						{
+							if (!GetConVarBool(G_hCvar_ModeTeamOnly) || (GetConVarBool(G_hCvar_ModeTeamOnly) && GetClientTeam(ply) == GetClientTeam(activator) || CheckCommandAccess(ply, "entWatch_chat", ADMFLAG_CHAT)))
+							{
+								CPrintToChat(ply, "\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
+							}
+						}
+					}
+					
 					entArray[index][ent_uses]++;
 					return Plugin_Changed;
 				}
 				else if (entArray[index][ent_mode] == 4 && entArray[index][ent_uses] < entArray[index][ent_maxuses] && entArray[index][ent_cooldowntime] <= -1)
 				{
-					CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
+					for (new ply = 1; ply <= MaxClients; ply++)
+					{
+						if (IsClientConnected(ply) && IsClientInGame(ply))
+						{
+							if (!GetConVarBool(G_hCvar_ModeTeamOnly) || (GetConVarBool(G_hCvar_ModeTeamOnly) && GetClientTeam(ply) == GetClientTeam(activator) || CheckCommandAccess(ply, "entWatch_chat", ADMFLAG_CHAT)))
+							{
+								CPrintToChat(ply, "\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
+							}
+						}
+					}
+					
 					entArray[index][ent_cooldowntime] = entArray[index][ent_cooldown];
 					entArray[index][ent_uses]++;
 					return Plugin_Changed;
 				}
 				else if (entArray[index][ent_mode] == 5 && entArray[index][ent_cooldowntime] <= -1)
 				{
-					CPrintToChatAll("\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
-					entArray[index][ent_uses]++;
+					for (new ply = 1; ply <= MaxClients; ply++)
+					{
+						if (IsClientConnected(ply) && IsClientInGame(ply))
+						{
+							if (!GetConVarBool(G_hCvar_ModeTeamOnly) || (GetConVarBool(G_hCvar_ModeTeamOnly) && GetClientTeam(ply) == GetClientTeam(activator) || CheckCommandAccess(ply, "entWatch_chat", ADMFLAG_CHAT)))
+							{
+								CPrintToChat(ply, "\x07%s[entWatch] \x07%s%N \x07%s(\x07%s%s\x07%s) \x07%s%t \x07%s%s", color_tag, color_name, activator, color_use, color_steamid, buffer_steamid, color_use, color_use, "use", entArray[index][ent_color], entArray[index][ent_name]);
+							}
+						}
+					}
 					
+					entArray[index][ent_uses]++;
 					if (entArray[index][ent_uses] >= entArray[index][ent_maxuses])
 					{
-						entArray[index][ent_cooldowntime] = entArray[index][ent_cooldown]
+						entArray[index][ent_cooldowntime] = entArray[index][ent_cooldown];
 						entArray[index][ent_uses] = 0;
 					}
 					
@@ -478,14 +555,14 @@ public Action:Timer_DisplayHUD(Handle:timer)
 	{
 		if (G_bConfigLoaded && !G_bRoundTransition)
 		{
-			new String:buffer_text[250];
+			new String:buffer_teamtext[5][250];
 			
 			for (new index = 0; index < entArraySize; index++)
 			{
-				new String:buffer_temp[128];
-				
 				if (entArray[index][ent_hud] && entArray[index][ent_ownerid] != -1)
 				{
+					new String:buffer_temp[128];
+				
 					if (GetConVarBool(G_hCvar_DisplayCooldowns))
 					{
 						if (entArray[index][ent_mode] == 2)
@@ -548,11 +625,11 @@ public Action:Timer_DisplayHUD(Handle:timer)
 					{
 						Format(buffer_temp, sizeof(buffer_temp), "%s: %N\n", entArray[index][ent_shortname], entArray[index][ent_ownerid]);
 					}
-				}
-				
-				if (strlen(buffer_temp) + strlen(buffer_text) <= sizeof(buffer_text))
-				{
-					StrCat(buffer_text, sizeof(buffer_text), buffer_temp);
+					
+					if (strlen(buffer_temp) + strlen(buffer_teamtext[GetClientTeam(entArray[index][ent_ownerid])]) <= sizeof(buffer_teamtext[]))
+					{
+						StrCat(buffer_teamtext[GetClientTeam(entArray[index][ent_ownerid])], sizeof(buffer_teamtext[]), buffer_temp);
+					}
 				}
 			}
 			
@@ -562,6 +639,19 @@ public Action:Timer_DisplayHUD(Handle:timer)
 				{
 					if (G_bDisplay[ply])
 					{
+						new String:buffer_text[250];
+						
+						for (new teamid = 0; teamid < sizeof(buffer_teamtext); teamid++)
+						{
+							if (!GetConVarBool(G_hCvar_ModeTeamOnly) || (GetConVarBool(G_hCvar_ModeTeamOnly) && GetClientTeam(ply) == teamid || !IsPlayerAlive(ply) || CheckCommandAccess(ply, "entWatch_chat", ADMFLAG_CHAT)))
+							{
+								if (strlen(buffer_teamtext[teamid]) + strlen(buffer_text) <= sizeof(buffer_text))
+								{
+									StrCat(buffer_text, sizeof(buffer_text), buffer_teamtext[teamid]);
+								}
+							}
+						}
+						
 						new Handle:hBuffer = StartMessageOne("KeyHintText", ply);
 						BfWriteByte(hBuffer, 1);
 						BfWriteString(hBuffer, buffer_text);
@@ -714,15 +804,15 @@ public Action:Command_Transfer(client, args)
 	GetCmdArg(2, reciever_argument, sizeof(reciever_argument));
 	
 	new target = -1;
-	if ((target = FindTarget(client, target_argument, true)) == -1)
+	if ((target = FindTarget(client, target_argument, false)) == -1)
 		return Plugin_Handled;
 	
 	new reciever = -1;
-	if ((reciever = FindTarget(client, reciever_argument, true)) == -1)
+	if ((reciever = FindTarget(client, reciever_argument, false)) == -1)
 		return Plugin_Handled;
 	
-	if (GetClientTeam(target) != GetClientTeam(reciever))
-		return Plugin_Handled;
+//	if (GetClientTeam(target) != GetClientTeam(reciever))
+//		return Plugin_Handled;
 	
 	if (G_bConfigLoaded && !G_bRoundTransition)
 	{
