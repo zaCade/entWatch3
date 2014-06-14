@@ -811,8 +811,8 @@ public Action:Command_Transfer(client, args)
 	if ((reciever = FindTarget(client, reciever_argument, false)) == -1)
 		return Plugin_Handled;
 	
-//	if (GetClientTeam(target) != GetClientTeam(reciever))
-//		return Plugin_Handled;
+	if (GetClientTeam(target) != GetClientTeam(reciever))
+		return Plugin_Handled;
 	
 	if (G_bConfigLoaded && !G_bRoundTransition)
 	{
